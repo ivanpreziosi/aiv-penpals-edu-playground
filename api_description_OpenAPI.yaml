@@ -1,0 +1,536 @@
+openapi: 3.0.0
+info:
+  title: Penpals V1 API
+  contact:
+   name: Ivan Preziosi
+   email: ivan.preziosi@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 0.0.1
+servers:
+- url: http://localhost:1312/V1
+# http://www.patorjk.com/software/taag/#p=display&h=0&v=0&c=bash&f=ANSI%20Shadow&t=Type%20Something
+# http://www.patorjk.com/software/taag/#p=display&f=Digital&t=Type%20Something%20
+
+#############################################
+# ██████╗  █████╗ ████████╗██╗  ██╗███████╗ #
+# ██╔══██╗██╔══██╗╚══██╔══╝██║  ██║██╔════╝ #
+# ██████╔╝███████║   ██║   ███████║███████╗ #
+# ██╔═══╝ ██╔══██║   ██║   ██╔══██║╚════██║ #
+# ██║     ██║  ██║   ██║   ██║  ██║███████║ #
+# ╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝ #
+#############################################
+paths:
+#  +-+-+-+-+ +-+-+-+-+-+ 
+#  |U|S|E|R| |L|O|G|I|N|
+#  +-+-+-+-+ +-+-+-+-+-+ 
+  /login:
+    post:
+      tags:
+      - User
+      summary: (PUBLIC) Login endpoint
+      operationId: login
+      requestBody:
+        description: Login data
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+              - username
+              - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful, returns token
+          headers:
+            X-Pp-Token:
+              description: The computed token
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "USER-LOGGED-IN"
+                  message:
+                    type: string
+                    example: "User logged in successfully."
+                  payload:
+                    $ref: '#/components/schemas/User'
+        401:
+          description: Login failed. check your credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+#  +-+-+-+-+ +-+-+-+-+ 
+#  |U|S|E|R| |S|A|V|E|
+#  +-+-+-+-+ +-+-+-+-+ 
+  /users:
+    post:
+      tags:
+      - User
+      summary: (PUBLIC) Register endpoint
+      operationId: register
+      requestBody:
+        description: Register new user
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+              - username
+              - password
+              - repeat_password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                repeat_password:
+                  type: string
+      responses:
+        200:
+          description: User succesfully saved
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "USER-SAVED"
+                  message:
+                    type: string
+                    example: "User saved successfully."
+        401:
+          description: Registration failed!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+#  +-+-+-+-+ +-+-+-+-+-+-+-+-+ 
+#  |U|S|E|R| |D|A|S|B|O|A|R|D|
+#  +-+-+-+-+ +-+-+-+-+-+-+-+-+
+    get:
+      tags:
+      - User
+      summary: Get the dashboard user data
+      operationId: dashboard
+      parameters:
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+      responses:
+        200:
+          description: Logged user's dashboard info
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - user
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "DASHBOARD-INFO"
+                  message:
+                    type: string
+                    example: "Dashboard info succesfully obtained."
+                  user:
+                    $ref: '#/components/schemas/User'
+                  newRequests:
+                    type: array
+                    items: 
+                      $ref: '#/components/schemas/ContactRequest'
+                  undeliveredReponses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactResponse'
+                  unreadResponses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContactResponse'
+        401:
+          description: Login failed. check your credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+
+  /reqs:
+# +-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+# |G|E|T| |C|O|N|T|A|C|T| |R|E|Q|U|E|S|T|
+# +-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+    get:
+      tags:
+      - ContactRequest
+      summary: Get a single ContactRequest
+      operationId: get-a-single-request
+      parameters:
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+        - name: reqId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: The desired request ID
+      responses:
+        200:
+          description: A user's contact requests
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "ALL-CONTACT-REQUESTS"
+                  message:
+                    type: string
+                    example: "All contact requests obtained."
+                  payload:
+                    $ref: '#/components/schemas/ContactRequest'
+        401:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  # +-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+  # |S|A|V|E| |C|O|N|T|A|C|T| |R|E|Q|U|E|S|T|
+  # +-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+    post:
+      parameters: 
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+      tags:
+        - ContactRequest
+      summary: Save ContactRequest endpoint
+      operationId: save-contact-request
+      requestBody:
+        description: Save a new contact request
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+              - username
+              - password
+              - repeat_password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                repeat_password:
+                  type: string
+      responses:
+        200:
+          description: ContactRequest succesfully saved
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "CONTACT-REQUEST-SAVED"
+                  message:
+                    type: string
+                    example: "ContactRequest saved successfully."
+        401:
+          description: Registration failed!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+# +-+-+-+-+-+-+ +-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
+# |L|O|G|G|E|D| |U|S|E|R| |C|O|N|T|A|C|T| |R|E|Q|U|E|S|T|S|
+# +-+-+-+-+-+-+ +-+-+-+-+ +-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+
+  /reqs/mine:
+    get:
+      tags:
+      - ContactRequest
+      summary: Get logged user's requests
+      operationId: user-requests
+      parameters:
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+      responses:
+        200:
+          description: Logged user's own contact requests
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "USER-CONTACT-REQUESTS"
+                  message:
+                    type: string
+                    example: "User's contact requests obtained."
+                  payload:
+                    type: array
+                    items: 
+                      $ref: '#/components/schemas/ContactRequest'
+        401:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                
+  /reqs/all:
+    get:
+      tags:
+      - ContactRequest
+      summary: Get all requests
+      operationId: all-requests
+      parameters:
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+      responses:
+        200:
+          description: All open contact requests
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "ALL-CONTACT-REQUESTS"
+                  message:
+                    type: string
+                    example: "All contact requests obtained."
+                  payload:
+                    type: array
+                    items: 
+                      $ref: '#/components/schemas/ContactRequest'
+        401:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /reqs/user:
+    get:
+      tags:
+      - ContactRequest
+      summary: Get all requests
+      operationId: a-user-requests
+      parameters:
+        - $ref: '#/components/parameters/headerUsername'
+        - $ref: '#/components/parameters/headerToken'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: The user ID
+      responses:
+        200:
+          description: A user's contact requests
+          content:
+            application/json:
+              schema:
+                required:
+                - status
+                - code
+                - message
+                - payload
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  code:
+                    type: string
+                    example: "ALL-CONTACT-REQUESTS"
+                  message:
+                    type: string
+                    example: "All contact requests obtained."
+                  payload:
+                    type: array
+                    items: 
+                      $ref: '#/components/schemas/ContactRequest'
+        401:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                
+                
+
+##############################################################################################
+#  ██████╗ ██████╗ ███╗   ███╗██████╗  ██████╗ ███╗   ██╗███████╗███╗   ██╗████████╗███████╗ #
+# ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔═══██╗████╗  ██║██╔════╝████╗  ██║╚══██╔══╝██╔════╝ #
+# ██║     ██║   ██║██╔████╔██║██████╔╝██║   ██║██╔██╗ ██║█████╗  ██╔██╗ ██║   ██║   ███████╗ #
+# ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██║   ██║██║╚██╗██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║ #
+# ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ╚██████╔╝██║ ╚████║███████╗██║ ╚████║   ██║   ███████║ #
+# ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝      ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝  #
+ #############################################################################################
+components:
+  parameters:
+    headerUsername:
+      in: header
+      name: username
+      description: string containing the logged username
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+    headerToken:
+      name: X-Pp-Token
+      in: header
+      description: string containing the logged user's token
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+  schemas:
+    ## USER SCHEMA ##
+    User:
+      required: 
+      - username
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+        authTokencontrolToken:
+          type: string
+    ## CONTACT REQUEST ##
+    ContactRequest:
+      required: 
+      - id
+      properties:
+        id:
+          type: integer
+        user: 
+          $ref: '#/components/schemas/User'
+        contactResponses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactResponse'
+        usersDelivered:
+          type: array
+          items: 
+            $ref: '#/components/schemas/User'
+        requestText:
+          type: string
+        requestCreateTime:
+          type: string
+          format: date-time
+        isActive:
+          type: integer
+          example: 1
+    ## CONTACT RESPONSE ##
+    ContactResponse :
+      required: 
+      - id
+      - contactRequest
+      properties:
+        id:
+          type: integer
+        contactRequest:
+          $ref: '#/components/schemas/ContactRequest'
+        user: 
+          $ref: '#/components/schemas/User'
+        recipient: 
+          $ref: '#/components/schemas/User'
+        responseText:
+          type: string
+        resposeCreateTime:
+          type: string
+          format: date-time
+        isActive:
+          type: integer
+          example: 1
+        isDelivered:
+          type: integer
+          example: 0
+    ## API RESPONSE SCHEMA ##
+    ApiResponse:
+      required:
+      - status
+      - code
+      - message
+      properties:
+        status:
+          type: string
+          example: "KO" 
+        code:
+          type: string
+          example: "A-SHORT-DESCRIPTIVE-CODE"
+        message:
+          type: string
+          example: "A verbose message about whats going on"
